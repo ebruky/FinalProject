@@ -3,6 +3,7 @@ using Business.Constants;
 using Business.ValidationRules.FluentValidation;
 using Core.Aspects.Autofac.Validation;
 using Core.CrossCuttingConcerns.Validation;
+using Core.Utilities.Business;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using DataAccess.Concrete.InMemory;
@@ -18,19 +19,28 @@ namespace Business.Concrete
     public class ProductManager : IProductService
     {
         IProductDAL _iProductDAL;   //Soyut Nesne ile bağlantı kurulacak
-        public ProductManager(IProductDAL iProductDAL)
+        ICategoryService _categoryService;    //Başka bir servis çağırılabilir fakat farklı bir dal çağrılmaz
+        public ProductManager(IProductDAL iProductDAL, ICategoryService categoryService)
         {
             _iProductDAL = iProductDAL;
+            _categoryService = categoryService;
 
 
         }
         [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
-        {
-            //ValidationTool.Validate(new ProductValidator(),product);
+        {   
+            
+           IResult result=  BusinessRules.Run(CheckIfProductCategoryCountCorrect(product.CategoryID), CheckIfProductNameExists(product.ProductName));
+            
+            if (result!=null)
+            {
+                return result;
+            }
 
             _iProductDAL.Add(product);
             return new SuccessResult(Messages.Added);
+
         }
 
         public IDataResult<List<Product>> GetAll()
@@ -65,6 +75,55 @@ namespace Business.Concrete
             return new SuccessDataResult<List<ProductDetailDTO>>( _iProductDAL.GetProductDetail(), Messages.Details);
         }
 
-        
+        public IResult Update(Product product)
+        {
+            IResult result = BusinessRules.Run(CheckIfProductCategoryCountCorrect(product.CategoryID), CheckIfProductNameExists(product.ProductName),CheckIfCategoryLimit());
+
+            if (result != null)
+            {
+                return result;
+            }
+
+            _iProductDAL.Update(product);
+            return new SuccessResult(Messages.Uptated);
+
+            
+        }
+
+        private IResult CheckIfProductCategoryCountCorrect(int CategoryId)
+        {
+            var result = _iProductDAL.GetAll(p => p.CategoryID == CategoryId).Count;
+            if (result >= 10)
+            {
+                return new ErrorResult();
+
+            }
+            return new SuccessResult();
+        }
+
+
+        private IResult CheckIfProductNameExists(string Name)
+        {//var result=_iProductDAL.GetAll(p => p.ProductName == Name).Any();                 //bu yapıda eleman var mı?
+            var result = _iProductDAL.GetAll();
+            foreach (var product in result)
+            {
+                if (product.ProductName == Name) { return new ErrorResult(); }
+                
+            }  
+
+            
+            return new SuccessResult();
+        }
+
+        private IResult CheckIfCategoryLimit()
+        {
+            var result = _categoryService.GetAll().Data.Count;
+            
+                if (result>=15) { return new ErrorResult(); }
+
+            
+
+            return new SuccessResult();
+        }
     }
 }

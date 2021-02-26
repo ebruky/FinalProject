@@ -1,4 +1,5 @@
-﻿using Business.Concrete;
+﻿using Business.Abstract;
+using Business.Concrete;
 using DataAccess.Concrete.EntityFramework;
 using DataAccess.Concrete.InMemory;
 using Entities.Concrete;
@@ -19,14 +20,14 @@ namespace ConsoleUI
         {
             EfCategoryDAL cd = new EfCategoryDAL();
             CategoryManager cm = new CategoryManager(cd);
-            foreach (var category in cm.GetAll())
+            foreach (var category in cm.GetAll().Data)
             {
                 Console.WriteLine(category.CategoryName);
             }
             Console.WriteLine("------------------------------------");
             Category c = new Category { CategoryName = "İçecek" };
             cd.Add(c);
-            foreach (var category in cm.GetAll())
+            foreach (var category in cm.GetAll().Data)
             {
                 Console.WriteLine(category.CategoryName);
             }
@@ -39,8 +40,9 @@ namespace ConsoleUI
             //{
             //    Console.WriteLine(item.ProductName);
             //}
+            ICategoryService categoryService = new CategoryManager(new EfCategoryDAL());
             EfProductDAL pd = new EfProductDAL();
-            ProductManager pm1 = new ProductManager(pd);
+            ProductManager pm1 = new ProductManager(pd, categoryService);
 
 
 
