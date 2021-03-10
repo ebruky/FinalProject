@@ -76,7 +76,7 @@ namespace Core.Utilities.FileHelper
             System.IO.FileInfo ff = new System.IO.FileInfo(file.FileName);
             string fileExtension = ff.Extension;
 
-            var creatingUniqueFilename = Guid.NewGuid().ToString("N")
+            var creatingUniqueFilename = Guid.NewGuid().ToString("N")  
                + "_" + DateTime.Now.Month + "_"
                + DateTime.Now.Day + "_"
                + DateTime.Now.Year + fileExtension;

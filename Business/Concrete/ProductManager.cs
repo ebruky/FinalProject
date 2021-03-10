@@ -2,6 +2,9 @@
 using Business.BusinessAspects.Autofac;
 using Business.Constants;
 using Business.ValidationRules.FluentValidation;
+using Core.Aspects.Autofac.Caching;
+using Core.Aspects.Autofac.Performance;
+using Core.Aspects.Autofac.Transaction;
 using Core.Aspects.Autofac.Validation;
 using Core.CrossCuttingConcerns.Validation;
 using Core.Utilities.Business;
@@ -30,6 +33,7 @@ namespace Business.Concrete
         }
         [SecuredOperation("product.add,admin")]
         [ValidationAspect(typeof(ProductValidator))]
+        [CacheRemoveAspect("IProductService.Get")]
         public IResult Add(Product product)
         {   
             
@@ -44,7 +48,8 @@ namespace Business.Concrete
             return new SuccessResult(Messages.Added);
 
         }
-
+        [CacheAspect]
+        [PerformanceAspect(1)]
         public IDataResult<List<Product>> GetAll()
         {//iş kodları
             //koşullar sağlanıyor mu?
@@ -61,7 +66,7 @@ namespace Business.Concrete
         {
             return new SuccessDataResult<List<Product>>(_iProductDAL.GetAll(p => p.CategoryID == id), Messages.ListOfDesiredFeature);
         }
-
+        [CacheAspect]
         public IDataResult<Product> GetById(int id)
         {
             return new SuccessDataResult<Product>(_iProductDAL.Get(p => p.ProductID == id),  Messages.GetById);
@@ -76,7 +81,8 @@ namespace Business.Concrete
         {
             return new SuccessDataResult<List<ProductDetailDTO>>( _iProductDAL.GetProductDetail(), Messages.Details);
         }
-
+        [CacheRemoveAspect("IProductService.Get")]
+        [PerformanceAspect(5)]
         public IResult Update(Product product)
         {
             IResult result = BusinessRules.Run(CheckIfProductCategoryCountCorrect(product.CategoryID), CheckIfProductNameExists(product.ProductName),CheckIfCategoryLimit());
@@ -126,6 +132,17 @@ namespace Business.Concrete
             
 
             return new SuccessResult();
+        }
+        [TransactionScopeAspect]
+        public IResult AddTransactionalTest(Product product)
+        {
+            Add(product);
+            if (product.UnitPrice < 15)
+            {
+                throw new Exception("Fiyat 15 ten küçük");
+            }
+            Add(product);
+            return null;
         }
     }
 }
