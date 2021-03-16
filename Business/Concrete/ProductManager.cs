@@ -54,10 +54,10 @@ namespace Business.Concrete
         {//iş kodları
             //koşullar sağlanıyor mu?
 
-            if (DateTime.Now.Hour == 22)
-            {
-                return new ErrorDataResult<List<Product>>(Messages.MaintenanceTime);
-            }
+            //if (DateTime.Now.Hour == 22)
+            //{
+            //    return new ErrorDataResult<List<Product>>(Messages.MaintenanceTime);
+            //}
             return new SuccessDataResult<List<Product>>(_iProductDAL.GetAll(),Messages.ListAll);
 
         }
