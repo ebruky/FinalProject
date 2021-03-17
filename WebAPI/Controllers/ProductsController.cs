@@ -39,7 +39,7 @@ namespace WebAPI.Controllers
             {
                 return Ok(result);
             }
-            return BadRequest(result.Message);
+            return BadRequest(result);
         }
         [HttpPost("Add")]
         public IActionResult Add(Product product)
@@ -61,9 +61,19 @@ namespace WebAPI.Controllers
             {
                 return Ok(result);
             }
-            return BadRequest(result.Message);
+            return BadRequest(result);
         }
+        [HttpGet("getallbycategoryid")]
+        public IActionResult GetAllByCategoryId(int categoryId)
+        {
 
+            var result = _productService.GetAllByCategoryId(categoryId);
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }
 
