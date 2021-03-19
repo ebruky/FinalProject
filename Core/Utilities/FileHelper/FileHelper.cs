@@ -9,56 +9,28 @@ namespace Core.Utilities.FileHelper
 {
     public class FileHelper
     {
-        public static string AddAsync(IFormFile file)
+        //sourcepath : kaynak yol
+        public static string directory = Environment.CurrentDirectory + @"\wwwroot";
+        public static string path = @"/images/";
+        public static string Add(IFormFile file)
         {
-            var result = newPath(file);
-            try
+            var sourcepath = Path.GetTempFileName();
+            if (file.Length > 0)
             {
-                var sourcepath = Path.GetTempFileName();
-                if (file.Length > 0)
-                    using (var stream = new FileStream(sourcepath, FileMode.Create))
-                        file.CopyTo(stream);
-
-                File.Move(sourcepath, result);
-            }
-            catch (Exception exception)
-            {
-
-                return exception.Message;
-            }
-
-            return result;
-
-        }
-
-        public static string UpdateAsync(string sourcePath, IFormFile file)
-        {
-            var result = newPath(file);
-
-            try
-            {
-                //File.Copy(sourcePath,result);
-
-                if (sourcePath.Length > 0)
+                using (var stream = new FileStream(sourcepath, FileMode.Create))
                 {
-                    using (var stream = new FileStream(result, FileMode.Create))
-                    {
-                        file.CopyTo(stream);
-                    }
+                    file.CopyTo(stream);
                 }
-
-                File.Delete(sourcePath);
             }
-            catch (Exception excepiton)
-            {
-                return excepiton.Message;
-            }
+            var extension = Path.GetExtension(file.FileName);
+            var newFileName = Guid.NewGuid().ToString("N") + extension;
 
-            return result;
+            File.Move(sourcepath, directory + path + newFileName);
+            return (path + newFileName).Replace("\\", " / ");
         }
-
-        public static IResult DeleteAsync(string path)
+        public static IResult Delete(string oldPath)
         {
+            path = (directory + oldPath).Replace("/", "\\");
             try
             {
                 File.Delete(path);
@@ -70,22 +42,22 @@ namespace Core.Utilities.FileHelper
 
             return new SuccessResult();
         }
-
-        public static string newPath(IFormFile file)
+        public static string Update(string sourcePath, IFormFile file)
         {
-            System.IO.FileInfo ff = new System.IO.FileInfo(file.FileName);
-            string fileExtension = ff.Extension;
+            var extension = Path.GetExtension(file.FileName);
+            var newFileName = Guid.NewGuid().ToString("N") + extension;
 
-            var creatingUniqueFilename = Guid.NewGuid().ToString("N")  
-               + "_" + DateTime.Now.Month + "_"
-               + DateTime.Now.Day + "_"
-               + DateTime.Now.Year + fileExtension;
-
-            string path = Path.Combine(Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).FullName + @"\Business\Uploads");
-
-            string result = $@"{path}\{creatingUniqueFilename}";
-
-            return result;
+            if (sourcePath.Length > 0)
+            {
+                using (var stream = new FileStream(directory + path + newFileName, FileMode.Create))
+                {
+                    file.CopyTo(stream);
+                }
+            }
+            File.Delete(directory + sourcePath);
+            return (path + newFileName).Replace("\\", "/");
         }
+
     }
 }
+
